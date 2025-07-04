@@ -3,15 +3,22 @@
 
 
 
-## Tech Stack
+## 🧰 Tech Stack
 
-**Client:** React, TailwindCSS, ShadCN
+- **Framework:** [Next.js](https://nextjs.org/)
+- **Frontend:** React, Tailwind CSS, ShadCN
+- **Backend:** API Routes Node.js
+- **Database:** (NeonDB)
+## 🚀 Features
 
-**Server:** Node, Express
+-  Manage prices 
+-  Manage items availability
+-  Printing order
+-  Track admin activity
+-  Automatically saved to database
+-  Responsive design
 
-**Database:** NeonDB
-
-## Run Locally
+## 📦 Installation
 
 Clone the project
 

@@ -1434,7 +1434,7 @@ export default function ConstructionOrderUI() {
             </CardHeader>
             <CardContent>
               <Tabs value={adminActiveTab} onValueChange={setAdminActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
                   <TabsTrigger value="inventory" className="text-xs lg:text-sm">
                     Inventory
                   </TabsTrigger>

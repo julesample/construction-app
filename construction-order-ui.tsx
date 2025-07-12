@@ -2060,13 +2060,11 @@ export default function ConstructionOrderUI() {
                             )}
                           </Button>
                         </PopoverTrigger>
-  <PopoverContent className="w-auto" align="start">
+                        <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
-                            mode="single"
                             selected={customerInfo.deliveryDate}
-                            onSelect={(date) => handleCustomerInfoChange("deliveryDate", date)}
+                            onChange={(date) => handleCustomerInfoChange("deliveryDate", date)}
                             disabled={(date) => date < new Date()}
-                            initialFocus
                           />
                         </PopoverContent>
                       </Popover>

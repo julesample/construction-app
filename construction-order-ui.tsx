@@ -2060,7 +2060,7 @@ export default function ConstructionOrderUI() {
                             )}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
+  <PopoverContent className="w-auto" align="start">
                           <Calendar
                             mode="single"
                             selected={customerInfo.deliveryDate}

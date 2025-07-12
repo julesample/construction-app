@@ -1928,6 +1928,7 @@ export default function ConstructionOrderUI() {
                             onSelect={(date) => handleCustomerInfoChange("deliveryDate", date)}
                             disabled={(date) => date < new Date()}
                             initialFocus
+  minDate={new Date()}
                           />
                         </PopoverContent>
                       </Popover>

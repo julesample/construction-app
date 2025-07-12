@@ -20,12 +20,19 @@ export async function POST(request: NextRequest) {
   try {
     const { barangay } = await request.json()
 
-    // Since there's no separate barangay table, we just need to ensure it exists for pricing.
-    // We can add a dummy pricing entry to create the barangay.
-    // A better approach would be to have a separate barangays table.
-    // For now, we'll just return success.
+    // Check if the barangay already exists
+    const existing = await sql`SELECT 1 FROM barangay_pricing WHERE barangay = ${barangay}`
+    if (existing.length > 0) {
+      return NextResponse.json({ success: false, message: "Barangay already exists." }, { status: 400 })
+    }
 
-    return NextResponse.json({ success: true, message: "Barangay added (or already exists)." })
+    // Add a dummy pricing entry to create the barangay.
+    await sql`
+      INSERT INTO barangay_pricing (barangay, material_id, unit_value, multiplier)
+      VALUES (${barangay}, 'dummy', 'dummy', 1.0)
+    `
+
+    return NextResponse.json({ success: true, message: "Barangay added." })
 
   } catch (error) {
     console.error("Error adding barangay:", error)
@@ -36,6 +43,12 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const { oldBarangay, newBarangay } = await request.json()
+
+    // Check if the new barangay name already exists
+    const existing = await sql`SELECT 1 FROM barangay_pricing WHERE barangay = ${newBarangay}`
+    if (existing.length > 0) {
+      return NextResponse.json({ success: false, message: "Barangay already exists." }, { status: 400 })
+    }
 
     await sql`
       UPDATE barangay_pricing
@@ -57,6 +70,12 @@ export async function DELETE(request: NextRequest) {
     await sql`
       DELETE FROM barangay_pricing
       WHERE barangay = ${barangay}
+    `
+
+    // also delete the dummy entry if it exists
+    await sql`
+      DELETE FROM barangay_pricing
+      WHERE barangay = ${barangay} AND material_id = 'dummy'
     `
 
     return NextResponse.json({ success: true })

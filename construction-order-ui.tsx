@@ -117,7 +117,7 @@ interface BarangayPricing {
   }
 }
 
-const barangays = [
+const initialBarangays = [
   "Local",
   "Pange",
   "Dapdap",
@@ -168,6 +168,7 @@ export default function ConstructionOrderUI() {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false)
+  const [barangays, setBarangays] = useState<string[]>(initialBarangays)
 
   // Barangay pricing
   const [barangayPricing, setBarangayPricing] = useState<BarangayPricing>({})
@@ -199,8 +200,27 @@ export default function ConstructionOrderUI() {
   // Edit states
   const [editingMaterial, setEditingMaterial] = useState<string>("")
   const [editingDescription, setEditingDescription] = useState<string>("")
+  const [editingBarangay, setEditingBarangay] = useState<string>("")
+  const [newBarangayName, setNewBarangayName] = useState<string>("")
 
   // Database functions
+  const loadBarangays = async () => {
+    try {
+      const response = await fetch("/api/barangays")
+      if (response.ok) {
+        const data = await response.json()
+        setBarangays(data)
+      }
+    } catch (error) {
+      console.error("Error loading barangays:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load barangays. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const loadMaterials = async () => {
     try {
       const response = await fetch("/api/materials")
@@ -307,7 +327,7 @@ export default function ConstructionOrderUI() {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true)
-      await Promise.all([loadMaterials(), loadBarangayPricing(), loadPriceHistory()])
+      await Promise.all([loadMaterials(), loadBarangayPricing(), loadPriceHistory(), loadBarangays()])
       setIsLoading(false)
     }
     loadData()
@@ -1183,6 +1203,112 @@ export default function ConstructionOrderUI() {
     }
   }
 
+  const handleAddBarangay = async () => {
+    if (newBarangayName.trim() === "") return
+
+    try {
+      const response = await fetch("/api/barangays", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ barangay: newBarangayName }),
+      })
+
+      if (response.ok) {
+        await loadBarangays()
+        setNewBarangayName("")
+        toast({
+          title: "Barangay Added",
+          description: `${newBarangayName} has been added to the list.`,
+        })
+      } else {
+        const data = await response.json()
+        toast({
+          title: "Error",
+          description: data.message || "Failed to add barangay.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error adding barangay:", error)
+      toast({
+        title: "Error",
+        description: "Failed to add barangay. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleEditBarangay = async (oldName: string) => {
+    if (newBarangayName.trim() === "" || oldName === newBarangayName) {
+      setEditingBarangay("")
+      return
+    }
+
+    try {
+      const response = await fetch("/api/barangays", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oldBarangay: oldName, newBarangay: newBarangayName }),
+      })
+
+      if (response.ok) {
+        await loadBarangays()
+        setEditingBarangay("")
+        setNewBarangayName("")
+        toast({
+          title: "Barangay Updated",
+          description: `${oldName} has been updated to ${newBarangayName}.`,
+        })
+      } else {
+        const data = await response.json()
+        toast({
+          title: "Error",
+          description: data.message || "Failed to update barangay.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error updating barangay:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update barangay. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDeleteBarangay = async (name: string) => {
+    try {
+      const response = await fetch("/api/barangays", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ barangay: name }),
+      })
+
+      if (response.ok) {
+        await loadBarangays()
+        toast({
+          title: "Barangay Deleted",
+          description: `${name} has been deleted from the list.`,
+        })
+      } else {
+        const data = await response.json()
+        toast({
+          title: "Error",
+          description: data.message || "Failed to delete barangay.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error deleting barangay:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete barangay. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -1443,6 +1569,9 @@ export default function ConstructionOrderUI() {
                   </TabsTrigger>
                   <TabsTrigger value="barangay" className="text-xs lg:text-sm">
                     Barangay
+                  </TabsTrigger>
+                  <TabsTrigger value="settings" className="text-xs lg:text-sm">
+                    Settings
                   </TabsTrigger>
                   <TabsTrigger value="activity" className="text-xs lg:text-sm">
                     Activity
@@ -1768,6 +1897,61 @@ export default function ConstructionOrderUI() {
                           ))}
                       </div>
                     )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="settings" className="mt-6">
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Manage Barangays</h3>
+                    <div className="space-y-2">
+                      {barangays.map((barangay) => (
+                        <div key={barangay} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          {editingBarangay === barangay ? (
+                            <Input
+                              type="text"
+                              value={newBarangayName}
+                              onChange={(e) => setNewBarangayName(e.target.value)}
+                              className="w-full"
+                            />
+                          ) : (
+                            <p>{barangay}</p>
+                          )}
+                          <div className="flex items-center gap-2">
+                            {editingBarangay === barangay ? (
+                              <>
+                                <Button size="sm" onClick={() => handleEditBarangay(barangay)}>
+                                  Save
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => setEditingBarangay("")}>
+                                  Cancel
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button size="sm" onClick={() => {
+                                  setEditingBarangay(barangay)
+                                  setNewBarangayName(barangay)
+                                }}>
+                                  Edit
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleDeleteBarangay(barangay)}>
+                                  Delete
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="text"
+                        value={newBarangayName}
+                        onChange={(e) => setNewBarangayName(e.target.value)}
+                        placeholder="New barangay name"
+                      />
+                      <Button onClick={handleAddBarangay}>Add Barangay</Button>
+                    </div>
                   </div>
                 </TabsContent>
 

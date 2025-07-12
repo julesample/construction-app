@@ -92,27 +92,3 @@ body {
     @apply bg-background text-foreground;
   }
 }
-
-.react-datepicker {
-  @apply bg-background border-border;
-}
-
-.react-datepicker__header {
-  @apply bg-background border-border;
-}
-
-.react-datepicker__current-month, .react-datepicker-time__header, .react-datepicker-year-header {
-  @apply text-foreground;
-}
-
-.react-datepicker__day-name, .react-datepicker__day, .react-datepicker__time-name {
-  @apply text-foreground;
-}
-
-.react-datepicker__day--selected, .react-datepicker__day--in-selecting-range, .react-datepicker__day--in-range, .react-datepicker__month-text--selected, .react-datepicker__month-text--in-selecting-range, .react-datepicker__month-text--in-range, .react-datepicker__quarter-text--selected, .react-datepicker__quarter-text--in-selecting-range, .react-datepicker__quarter-text--in-range, .react-datepicker__year-text--selected, .react-datepicker__year-text--in-selecting-range, .react-datepicker__year-text--in-range {
-  @apply bg-primary text-primary-foreground;
-}
-
-.react-datepicker__day--keyboard-selected, .react-datepicker__month-text--keyboard-selected, .react-datepicker__quarter-text--keyboard-selected, .react-datepicker__year-text--keyboard-selected {
-  @apply bg-primary text-primary-foreground;
-}

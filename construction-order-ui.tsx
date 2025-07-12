@@ -52,8 +52,7 @@ import {
   Clock,
 } from "lucide-react"
 import { format } from "date-fns"
-import { cn, debounce } from "@/lib/utils"
-import { useCallback } from "react"
+import { cn } from "@/lib/utils"
 
 interface MaterialUnit {
   value: string
@@ -118,6 +117,21 @@ interface BarangayPricing {
   }
 }
 
+const barangays = [
+  "Local",
+  "Pange",
+  "Dapdap",
+  "Caloloma (Rawis)",
+  "Villahermosa",
+  "Bangon",
+  "San Luis",
+  "Rama",
+  "Napalisan",
+  "Buenos Aires",
+  "Calanyugan",
+  "Cambaye",
+]
+
 const categories = ["Masonry", "Aggregates", "Binding Materials"]
 
 // Security utilities
@@ -155,12 +169,9 @@ export default function ConstructionOrderUI() {
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false)
 
-  // Barangay states
-  const [barangays, setBarangays] = useState<string[]>([])
+  // Barangay pricing
   const [barangayPricing, setBarangayPricing] = useState<BarangayPricing>({})
   const [selectedBarangayForPricing, setSelectedBarangayForPricing] = useState<string>("")
-  const [editingBarangay, setEditingBarangay] = useState<string | null>(null)
-  const [newBarangayName, setNewBarangayName] = useState("")
 
   // Password management
   const [showChangePassword, setShowChangePassword] = useState<boolean>(false)
@@ -212,66 +223,6 @@ export default function ConstructionOrderUI() {
     }
   }
 
-  const handleAddBarangay = async () => {
-    if (!newBarangayName.trim()) {
-      toast({ title: "Error", description: "Barangay name cannot be empty.", variant: "destructive" })
-      return
-    }
-    try {
-      await fetch("/api/barangays", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ barangay: newBarangayName }),
-      })
-      setNewBarangayName("")
-      await loadBarangays()
-      toast({ title: "Success", description: "Barangay added." })
-    } catch (error) {
-      console.error("Error adding barangay:", error)
-      toast({ title: "Error", description: "Failed to add barangay.", variant: "destructive" })
-    }
-  }
-
-  const handleUpdateBarangay = async (oldBarangay: string) => {
-    if (!newBarangayName.trim()) {
-      toast({ title: "Error", description: "Barangay name cannot be empty.", variant: "destructive" })
-      return
-    }
-    try {
-      await fetch("/api/barangays", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oldBarangay, newBarangay: newBarangayName }),
-      })
-      setEditingBarangay(null)
-      setNewBarangayName("")
-      await loadBarangays()
-      await loadBarangayPricing()
-      toast({ title: "Success", description: "Barangay updated." })
-    } catch (error) {
-      console.error("Error updating barangay:", error)
-      toast({ title: "Error", description: "Failed to update barangay.", variant: "destructive" })
-    }
-  }
-
-  const handleDeleteBarangay = async (barangay: string) => {
-    if (confirm(`Are you sure you want to delete ${barangay}? This will remove all its pricing data.`)) {
-      try {
-        await fetch("/api/barangays", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ barangay }),
-        })
-        await loadBarangays()
-        await loadBarangayPricing()
-        toast({ title: "Success", description: "Barangay deleted." })
-      } catch (error) {
-        console.error("Error deleting barangay:", error)
-        toast({ title: "Error", description: "Failed to delete barangay.", variant: "destructive" })
-      }
-    }
-  }
-
   const loadBarangayPricing = async () => {
     try {
       const response = await fetch("/api/barangay-pricing")
@@ -284,23 +235,6 @@ export default function ConstructionOrderUI() {
       toast({
         title: "Error",
         description: "Failed to load barangay pricing. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const loadBarangays = async () => {
-    try {
-      const response = await fetch("/api/barangays")
-      if (response.ok) {
-        const data = await response.json()
-        setBarangays(data)
-      }
-    } catch (error) {
-      console.error("Error loading barangays:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load barangays. Please try again.",
         variant: "destructive",
       })
     }
@@ -373,7 +307,7 @@ export default function ConstructionOrderUI() {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true)
-      await Promise.all([loadMaterials(), loadBarangayPricing(), loadPriceHistory(), loadBarangays()])
+      await Promise.all([loadMaterials(), loadBarangayPricing(), loadPriceHistory()])
       setIsLoading(false)
     }
     loadData()
@@ -643,23 +577,6 @@ export default function ConstructionOrderUI() {
     setEditingMaterial("")
     setEditingDescription("")
   }
-
-  const debouncedUpdateMaterialPrice = useCallback(
-    debounce(async (materialId: string, unitValue: string, newPrice: number) => {
-      updateMaterialPrice(materialId, unitValue, newPrice)
-    }, 500),
-    [materials],
-  )
-
-  const debouncedUpdateBarangayPricing = useCallback(
-    debounce(
-      async (barangay: string, materialId: string, unitValue: string, multiplier: number, fixedPrice?: number) => {
-        updateBarangayPricing(barangay, materialId, unitValue, multiplier, fixedPrice)
-      },
-      500,
-    ),
-    [materials, barangayPricing],
-  )
 
   // Admin functions
   const handleAdminLogin = async () => {
@@ -1517,7 +1434,7 @@ export default function ConstructionOrderUI() {
             </CardHeader>
             <CardContent>
               <Tabs value={adminActiveTab} onValueChange={setAdminActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
                   <TabsTrigger value="inventory" className="text-xs lg:text-sm">
                     Inventory
                   </TabsTrigger>
@@ -1526,9 +1443,6 @@ export default function ConstructionOrderUI() {
                   </TabsTrigger>
                   <TabsTrigger value="barangay" className="text-xs lg:text-sm">
                     Barangay
-                  </TabsTrigger>
-                  <TabsTrigger value="barangay-pricing" className="text-xs lg:text-sm">
-                    Pricing
                   </TabsTrigger>
                   <TabsTrigger value="activity" className="text-xs lg:text-sm">
                     Activity
@@ -1617,9 +1531,9 @@ export default function ConstructionOrderUI() {
                                   <Label className="w-20 lg:w-24 text-sm">{unit.label}:</Label>
                                   <Input
                                     type="number"
-                                    defaultValue={unit.price}
+                                    value={unit.price}
                                     onChange={(e) =>
-                                      debouncedUpdateMaterialPrice(material.id, unit.value, Number(e.target.value))
+                                      updateMaterialPrice(material.id, unit.value, Number(e.target.value))
                                     }
                                     className="w-24 lg:w-32"
                                     min="0"
@@ -1749,59 +1663,6 @@ export default function ConstructionOrderUI() {
 
                 <TabsContent value="barangay" className="mt-6">
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Manage Barangays</h3>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="text"
-                        placeholder="New barangay name"
-                        value={newBarangayName}
-                        onChange={(e) => setNewBarangayName(e.target.value)}
-                      />
-                      <Button onClick={handleAddBarangay}>Add</Button>
-                    </div>
-                    <div className="space-y-2">
-                      {barangays.map((barangay) => (
-                        <div key={barangay} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          {editingBarangay === barangay ? (
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="text"
-                                defaultValue={barangay}
-                                onChange={(e) => setNewBarangayName(e.target.value)}
-                                autoFocus
-                              />
-                              <Button size="sm" onClick={() => handleUpdateBarangay(barangay)}>
-                                Save
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => setEditingBarangay(null)}>
-                                Cancel
-                              </Button>
-                            </div>
-                          ) : (
-                            <>
-                              <span>{barangay}</span>
-                              <div className="flex items-center gap-2">
-                                <Button size="sm" variant="outline" onClick={() => setEditingBarangay(barangay)}>
-                                  Edit
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleDeleteBarangay(barangay)}
-                                >
-                                  Delete
-                                </Button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="barangay-pricing" className="mt-6">
-                  <div className="space-y-4">
                     <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                       <h3 className="font-semibold text-lg">Barangay-Specific Pricing</h3>
                       <Select value={selectedBarangayForPricing} onValueChange={setSelectedBarangayForPricing}>
@@ -1861,9 +1722,9 @@ export default function ConstructionOrderUI() {
                                         <div className="flex items-center gap-1">
                                           <Input
                                             type="number"
-                                            defaultValue={pricing.multiplier}
+                                            value={pricing.multiplier}
                                             onChange={(e) =>
-                                              debouncedUpdateBarangayPricing(
+                                              updateBarangayPricing(
                                                 selectedBarangayForPricing,
                                                 material.id,
                                                 unit.value,
@@ -1881,9 +1742,9 @@ export default function ConstructionOrderUI() {
                                         <div className="flex items-center gap-1">
                                           <Input
                                             type="number"
-                                            defaultValue={pricing.fixedPrice || ""}
+                                            value={pricing.fixedPrice || ""}
                                             onChange={(e) =>
-                                              debouncedUpdateBarangayPricing(
+                                              updateBarangayPricing(
                                                 selectedBarangayForPricing,
                                                 material.id,
                                                 unit.value,
@@ -2062,9 +1923,11 @@ export default function ConstructionOrderUI() {
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
+                            mode="single"
                             selected={customerInfo.deliveryDate}
-                            onChange={(date) => handleCustomerInfoChange("deliveryDate", date)}
-  minDate={new Date()}
+                            onSelect={(date) => handleCustomerInfoChange("deliveryDate", date)}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
                           />
                         </PopoverContent>
                       </Popover>

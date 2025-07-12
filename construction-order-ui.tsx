@@ -2064,7 +2064,7 @@ export default function ConstructionOrderUI() {
                           <Calendar
                             selected={customerInfo.deliveryDate}
                             onChange={(date) => handleCustomerInfoChange("deliveryDate", date)}
-                            disabled={(date) => date < new Date()}
+  minDate={new Date()}
                           />
                         </PopoverContent>
                       </Popover>
